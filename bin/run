@@ -1,0 +1,11 @@
+#!/bin/bash
+
+if [ -z $JAVA_HOME ]; then
+    JAVA_HOME=/opt/jdk1.7.0_67/
+fi
+
+JAVA=$JAVA_HOME/bin/java
+
+CLASS=com.dz.tools.TimeSeriesGeneratorRunner
+
+$JAVA -Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=4000,suspend=n -cp opentsdb-mr.jar:libs/*  $CLASS $@
