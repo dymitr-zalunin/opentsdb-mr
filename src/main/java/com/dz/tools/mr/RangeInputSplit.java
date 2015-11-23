@@ -58,4 +58,25 @@ public class RangeInputSplit extends InputSplit implements Writable {
     public long getStop() {
         return stop;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        RangeInputSplit that = (RangeInputSplit) o;
+
+        if (start != that.start) return false;
+        if (stop != that.stop) return false;
+        return span == that.span;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = (int) (start ^ (start >>> 32));
+        result = 31 * result + (int) (stop ^ (stop >>> 32));
+        result = 31 * result + (int) (span ^ (span >>> 32));
+        return result;
+    }
 }

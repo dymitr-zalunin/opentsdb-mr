@@ -13,6 +13,7 @@ public class RangeRecordReader extends RecordReader<LongWritable, LongWritable> 
     private long stop;
     private long span;
     private long complete;
+    private boolean isNext;
     private LongWritable key;
     private LongWritable value;
 
@@ -26,24 +27,20 @@ public class RangeRecordReader extends RecordReader<LongWritable, LongWritable> 
         stop = ((RangeInputSplit) inputSplit).getStop();
         span = ((RangeInputSplit) inputSplit).getSpan();
         complete = start;
+        isNext=true;
         value = new LongWritable(stop);
     }
 
     @Override
     public boolean nextKeyValue() throws IOException, InterruptedException {
-        boolean next_exists = true;
-        long current_start = complete;
-
-        if (complete >= stop) {
-            next_exists = false;
-        } else if ((complete + span) > stop) {
-            complete = stop;
-        } else {
-            complete += span;
+        key = new LongWritable(start);
+        value = new LongWritable(stop);
+        boolean next=false;
+        if (isNext) {
+            next=true;
+            isNext=false;
         }
-        key = new LongWritable(current_start);
-        value = new LongWritable(complete);
-        return next_exists;
+        return next;
     }
 
     @Override
@@ -58,10 +55,7 @@ public class RangeRecordReader extends RecordReader<LongWritable, LongWritable> 
 
     @Override
     public float getProgress() throws IOException, InterruptedException {
-        if (stop - start == 0) {
-            return 1;
-        }
-        return (complete - start) / (stop - start);
+        return 1;
     }
 
     @Override

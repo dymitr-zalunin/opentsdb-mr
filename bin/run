@@ -1,11 +1,24 @@
 #!/bin/bash
-
+#set -x
 if [ -z $JAVA_HOME ]; then
     JAVA_HOME=/opt/jdk1.7.0_67/
 fi
 
 JAVA=$JAVA_HOME/bin/java
+MR_CLASSPATH=`(find libs/ -name '*.jar' | tr '\n' ',')`
+export HADOOP_CLASSPATH=`(find libs/ -name '*.jar' | tr '\n' ':')`opentsdb-mr.jar
+HADOOP=hadoop
+HBASE=hbase
 
-CLASS=com.dz.tools.TimeSeriesGeneratorRunner
-
-$JAVA -Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=4000,suspend=n -cp opentsdb-mr.jar:libs/*  $CLASS $@
+if [ "$1" == "mr" ]
+then
+    shift
+    CLASS=com.dz.tools.mr.MRGenerator
+    $HADOOP jar ./opentsdb-mr.jar $CLASS -libjars $MR_CLASSPATH -D rows.per.map=2000000 -D mapred.child.java.opts="-Xmx2048m" $@
+    $HADOOP dfs -chown -R hbase:hbase $1
+    $HBASE org.apache.hadoop.hbase.mapreduce.LoadIncrementalHFiles $1 tsdb
+elif [ "$1" == "sa" ]
+then
+    CLASS=com.dz.tools.TimeSeriesGeneratorRunner
+    $HADOOP jar ./opentsdb-mr.jar $CLASS $@
+fi

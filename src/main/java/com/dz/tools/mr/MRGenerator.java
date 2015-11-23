@@ -3,17 +3,34 @@ package com.dz.tools.mr;
 import com.dz.tools.ArgsP;
 import com.google.common.base.Function;
 import com.google.common.collect.FluentIterable;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
+import org.apache.hadoop.hbase.mapreduce.HFileOutputFormat;
+import org.apache.hadoop.hbase.mapreduce.HFileOutputFormat2;
+import org.apache.hadoop.hbase.mapreduce.LoadIncrementalHFiles;
 import org.apache.hadoop.hbase.mapreduce.TableOutputFormat;
+import org.apache.hadoop.hdfs.protocol.HdfsFileStatus;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Map.Entry;
 
 public class MRGenerator extends Configured implements Tool {
 
@@ -24,6 +41,7 @@ public class MRGenerator extends Configured implements Tool {
         long stop = argsP.getStop().getMillis() / 1000;
         long span = argsP.getSpan();
         String metric_name = argsP.getMetricName();
+
 
         String[] tags = FluentIterable.from(argsP.getTags().entrySet())
                 .transform(new Function<Map.Entry<String, String>, String>() {
@@ -42,10 +60,16 @@ public class MRGenerator extends Configured implements Tool {
         job.setJarByClass(MRGenerator.class);
         job.setMapperClass(TimeSeriesMapper.class);
         job.setInputFormatClass(RangeInputFormat.class);
-        job.setOutputKeyClass(ImmutableBytesWritable.class);
-        job.setOutputValueClass(Put.class);
-        job.setOutputFormatClass(TableOutputFormat.class);
-        return job.waitForCompletion(true) ? 1 : 0;
+        job.setMapOutputKeyClass(ImmutableBytesWritable.class);
+        job.setMapOutputValueClass(Put.class);
+
+        Connection connection = ConnectionFactory.createConnection(conf);
+        Table hTable = connection.getTable(TableName.valueOf("tsdb"));
+        HFileOutputFormat2.setOutputPath(job, new Path(metric_name));
+        HFileOutputFormat2.configureIncrementalLoad(job, hTable,connection.getRegionLocator(TableName.valueOf("tsdb")));
+
+        int res = job.waitForCompletion(true) ? 1 : 0;
+        return res;
     }
 
     public static void usage() {
@@ -56,7 +80,7 @@ public class MRGenerator extends Configured implements Tool {
 
     public static int main(String[] args) throws Exception {
         int run = -1;
-        run = ToolRunner.run(new MRGenerator(), args);
+        run = ToolRunner.run(HBaseConfiguration.create(), new MRGenerator(), args);
         return run;
     }
 

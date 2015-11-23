@@ -39,12 +39,17 @@ public class TimeSeries {
     }
 
     public static class DataPoint {
-        double value;
-        long timestamp;
+        public double value;
+        public long timestamp;
 
         public DataPoint(long timestamp, double value) {
             this.timestamp = timestamp;
             this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return Long.toString(timestamp);
         }
     }
 

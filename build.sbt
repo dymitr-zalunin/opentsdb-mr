@@ -1,12 +1,13 @@
 libraryDependencies ++= Seq(
   "junit" % "junit" % "4.12" % Test,
   "com.novocode" % "junit-interface" % "0.11" % Test,
-  "org.apache.hadoop" % "hadoop-test" % "1.0.4" % Test,
   "org.hamcrest" % "hamcrest-all" % "1.1" % Test,
-  "org.apache.mrunit" % "mrunit" % "1.1.0" % Test classifier "hadoop1",
-  "org.apache.hadoop" % "hadoop-core" % "1.0.4",
-  "org.apache.hbase" % "hbase" % "0.94.6",
-  "com.google.guava" % "guava" % "18.0",
+  "org.apache.hadoop" % "hadoop-client" % "2.6.0-mr1-cdh5.5.1",
+  "org.apache.hbase" % "hbase-client" % "1.0.0-cdh5.5.1",
+  "org.apache.hbase" % "hbase-common" % "1.0.0-cdh5.5.1",
+  "org.apache.hbase" % "hbase-server" % "1.0.0-cdh5.5.1",
+  "org.apache.hbase" % "hbase-hadoop-compat" % "1.0.0-cdh5.5.1",
+  "com.google.guava" % "guava" % "14.0",
   "joda-time" % "joda-time" % "2.0"
 )
 
@@ -35,3 +36,5 @@ lazy val distr = taskKey[Unit]("Task to copy dependencies jars")
 lazy val libDir = settingKey[File]("the directory to retrieve dependencies")
 
 libDir := baseDirectory.value / "bin/libs"
+
+resolvers += "Cloudera" at "https://repository.cloudera.com/artifactory/cloudera-repos/"

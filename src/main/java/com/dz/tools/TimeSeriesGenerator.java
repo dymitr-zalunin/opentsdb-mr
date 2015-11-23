@@ -1,13 +1,21 @@
 package com.dz.tools;
 
 import com.dz.tools.TimeSeries.DataPoint;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 public class TimeSeriesGenerator {
+
+    private final static Log log= LogFactory.getLog(TimeSeriesGenerator.class);
 
     public static final byte[] TSDB_TABLE_NAME = Bytes.toBytes("tsdb");
     public static final byte[] T_CF = Bytes.toBytes("t");
@@ -110,8 +118,14 @@ public class TimeSeriesGenerator {
             timeSeries.addTag(tag.getKey(), tag.getValue());
         }
         Random random = new Random();
+        int ready=0;
+        int toReport= (int) ((stop-start)/(10*span));
         for (long i = start; i < stop; i+=span) {
             timeSeries.addDataPoint(new DataPoint(i, random.nextDouble() * 100));
+            ready++;
+            if (ready % (toReport) == 0) {
+                log.info(String.format("generate %d", ready));
+            }
         }
 
         return timeSeries;
